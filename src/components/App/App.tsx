@@ -3,7 +3,7 @@ import { fetchMovies, fetchTrendMovies } from '../../services/movieService';
 import { SearchBar } from '../SearchBar/SearchBar';
 import type { Movie } from '../../types/movie';
 import { MovieGrid } from '../MovieGrid/MovieGrid';
-import toast from 'react-hot-toast';
+import toast, { Toaster } from 'react-hot-toast';
 import { ErrorMessage } from '../ErrorMessage/ErrorMessage';
 import { Loader } from '../Loader/Loader';
 import { MovieModal } from '../MovieModal/MovieModal';
@@ -15,10 +15,12 @@ export default function App() {
     const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
 
     function onSelect(movie: Movie) {
+        document.body.style.overflow = 'hidden';
         setSelectedMovie(movie);
     }
 
     function closeModal() {
+        document.body.style.overflow = 'visible';
         setSelectedMovie(null);
     }
 
@@ -48,20 +50,6 @@ export default function App() {
         fetchInitialMovies();
     }, []);
 
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') {
-                closeModal();
-            }
-        };
-
-        document.addEventListener('keydown', handleKeyDown);
-
-        return () => {
-            document.removeEventListener('keydown', handleKeyDown);
-        };
-    }, [selectedMovie]);
-
     return (
         <>
             <SearchBar onSubmit={handleSubmit} />
@@ -77,6 +65,8 @@ export default function App() {
             {Boolean(movies.length) && (
                 <MovieGrid onSelect={onSelect} movies={movies} />
             )}
+
+            <Toaster />
         </>
     );
 }

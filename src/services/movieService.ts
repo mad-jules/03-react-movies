@@ -9,7 +9,7 @@ interface ApiResponse {
     page: number;
 }
 
-export async function fetchMovies(query: string) {
+export async function fetchMovies(query: string): Promise<ApiResponse> {
     const response = await axios.get<ApiResponse>(
         'https://api.themoviedb.org/3/search/movie',
         {
@@ -26,7 +26,7 @@ export async function fetchMovies(query: string) {
     return response.data;
 }
 
-export async function fetchTrendMovies() {
+export async function fetchTrendMovies(): Promise<ApiResponse> {
     const response = await axios.get<ApiResponse>(
         'https://api.themoviedb.org/3/trending/movie/day',
         {
