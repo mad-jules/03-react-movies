@@ -1,55 +1,82 @@
-import CafeInfo from '../CafeInfo/CafeInfo';
-import css from './App.module.css';
-import type { Votes, VoteType } from '../../types/votes';
-import { useState } from 'react';
-import VoteOptions from '../VoteOptions/VoteOptions';
-import VoteStats from '../VoteStats/VoteStats';
-import Notification from '../Notification/Notification';
-
-const initVotes: Votes = {
-    good: 0,
-    neutral: 0,
-    bad: 0,
-};
+import { useEffect, useState } from 'react';
+import { fetchMovies, fetchTrendMovies } from '../../services/fetchMovies';
+import { SearchBar } from '../SearchBar/SearchBar';
+import type { Movie } from '../../types/movie';
+import { MovieGrid } from '../MovieGrid/MovieGrid';
+import toast from 'react-hot-toast';
+import { ErrorMessage } from '../ErrorMessage/ErrorMessage';
+import { Loader } from '../Loader/Loader';
+import { MovieModal } from '../MovieModal/MovieModal';
 
 export default function App() {
-    const [votes, setVotes] = useState<Votes>(initVotes);
+    const [movies, setMovies] = useState<Movie[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [isError, setIsError] = useState(false);
+    const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
 
-    const handleVote = (key: VoteType) => {
-        setVotes({ ...votes, [key]: votes[key] + 1 });
-    };
+    function onSelect(movie: Movie) {
+        setSelectedMovie(movie);
+    }
 
-    const resetVotes = () => {
-        setVotes(initVotes);
-    };
+    function closeModal() {
+        setSelectedMovie(null);
+    }
 
-    const totalVotes = Object.values(votes).reduce(
-        (acc, vote) => acc + vote,
-        0,
-    );
-    const positiveRate = totalVotes
-        ? Math.round((votes.good * 100) / totalVotes)
-        : 0;
+    async function handleSubmit(query: string) {
+        try {
+            setIsError(false);
+            setIsLoading(true);
+            setMovies([]);
+            const response = await fetchMovies(query);
+            setMovies(response.results);
+            if (!response.results.length) {
+                toast.error('No movies found for your request.');
+            }
+        } catch (error) {
+            setIsError(true);
+            console.log(error);
+        } finally {
+            setIsLoading(false);
+        }
+    }
 
-    const canReset = totalVotes > 0;
+    useEffect(() => {
+        async function fetchInitialMovies() {
+            const initialMovies = await fetchTrendMovies();
+            setMovies(initialMovies.results);
+        }
+        fetchInitialMovies();
+    }, []);
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [selectedMovie]);
 
     return (
-        <div className={css.app}>
-            <CafeInfo />
-            <VoteOptions
-                onVote={handleVote}
-                onReset={resetVotes}
-                canReset={canReset}
-            />
-            {totalVotes > 0 ? (
-                <VoteStats
-                    votes={votes}
-                    positiveRate={positiveRate}
-                    totalVotes={totalVotes}
-                />
-            ) : (
-                <Notification />
+        <>
+            <SearchBar onSubmit={handleSubmit} />
+
+            {isLoading && Loader()}
+
+            {isError && ErrorMessage()}
+
+            {selectedMovie && (
+                <MovieModal movie={selectedMovie} onClose={closeModal} />
             )}
-        </div>
+
+            {Boolean(movies.length) && (
+                <MovieGrid onSelect={onSelect} movies={movies} />
+            )}
+        </>
     );
 }
