@@ -17,26 +17,30 @@ export function MovieModal({ movie, onClose }: MovieModalProps) {
         };
 
         document.addEventListener('keydown', handleKeyDown);
+        document.body.style.overflow = 'hidden';
 
         return () => {
             document.removeEventListener('keydown', handleKeyDown);
+            document.body.style.overflow = 'visible';
         };
     }, []);
 
+    function handleClose(e: React.MouseEvent<HTMLElement>) {
+        if (e.target === e.currentTarget) {
+            onClose();
+        }
+    }
+
     return createPortal(
         <div
-            onClick={(e) => {
-                if (e.target === e.currentTarget) {
-                    onClose();
-                }
-            }}
+            onClick={handleClose}
             className={css.backdrop}
             role="dialog"
             aria-modal="true"
         >
             <div className={css.modal}>
                 <button
-                    onClick={onClose}
+                    onClick={handleClose}
                     className={css.closeButton}
                     aria-label="Close modal"
                 >

@@ -15,12 +15,10 @@ export default function App() {
     const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
 
     function onSelect(movie: Movie) {
-        document.body.style.overflow = 'hidden';
         setSelectedMovie(movie);
     }
 
     function closeModal() {
-        document.body.style.overflow = 'visible';
         setSelectedMovie(null);
     }
 
